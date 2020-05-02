@@ -23,7 +23,8 @@ Game.prototype = {
   STATE_GAME_END: 3,
 
   MIN_PLAYERS: 2,
-  MAX_PLAYERS: 4,
+  MAX_PLAYERS: 8,
+  MIN_PLAYERS_FOR_EXPANSION: 5;
 
   setup: function() {
     const userList = Object.values(this.users);
@@ -85,21 +86,49 @@ Game.prototype = {
   createDeck: function() {
     let nextId = 0;
     let i;
-    const tmpDeck = [
-      new Card({ id: nextId++, type: Card.PRINCESS}),
-      new Card({ id: nextId++, type: Card.COUNTESS}),
-      new Card({ id: nextId++, type: Card.KING})
+    let cardTypesToAdd = [
+      Card.PRINCESS,
+      Card.COUNTESS,
+      Card.KING,
+      Card.PRINCE,
+      Card.PRINCE,
+      Card.HANDMAID,
+      Card.HANDMAID,
+      Card.BARON,
+      Card.BARON,
+      Card.PRIEST,
+      Card.PRIEST,
+      Card.GUARD,
+      Card.GUARD,
+      Card.GUARD,
+      Card.GUARD,
+      Card.GUARD,
     ];
 
-    for (i=0; i<2; ++i) {
-      tmpDeck.push(new Card({ id: nextId++, type: Card.PRINCE }));
-      tmpDeck.push(new Card({ id: nextId++, type: Card.HANDMAID }));
-      tmpDeck.push(new Card({ id: nextId++, type: Card.BARON }));
-      tmpDeck.push(new Card({ id: nextId++, type: Card.PRIEST }));
+    // Expansion
+    if (this.getPlayers().length >= MIN_PLAYERS_FOR_EXPANSION) {
+      cardTypesToAdd = [
+        ...cardTypesToAdd,
+        Card.ASSASSIN,
+        Card.JESTER,
+        Card.GUARD,
+        Card.GUARD,
+        Card.GUARD,
+        Card.CARDINAL,
+        Card.CARDINAL,
+        Card.BARONESS,
+        Card.BARONESS,
+        Card.SYCOPHANT,
+        Card.SYCOPHANT,
+        Card.COUNT,
+        Card.COUNT,
+        Card.CONSTABLE,
+        Card.DOWAGER_QUEEN,
+        Card.BISHOP,
+      ];
     }
-    for (i=0; i<5; ++i) {
-      tmpDeck.push(new Card({ id: nextId++, type: Card.GUARD }));
-    }
+
+    let tmpDeck = cardTypesToAdd.map(cardType => new Card({ id: nextId++, type: cardType }));
 
     this.deck = _.shuffle(tmpDeck);
 

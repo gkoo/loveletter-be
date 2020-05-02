@@ -4,6 +4,7 @@ const Card = require('./card');
 const Game = require('./game');
 const User = require('./user');
 
+let baseGame;
 let game;
 let players;
 
@@ -23,21 +24,61 @@ beforeEach(() => {
     broadcastTo: mockBroadcastTo,
     users,
   });
-  game.setup();
+  baseGame.setup();
+  game = baseGame;
 });
 
 describe('newRound', () => {
-  it('creates a deck', () => {
-    game.newRound();
-    expect(game.deck).toHaveLength(15);
-  });
-
-  it('deals cards', () => {
-    game.newRound();
-    Object.values(game.players).forEach(player => {
-      const numCards = (player.id === game.activePlayerId) ? 2 : 1;
+  const itDealsCards = (gameToTest) => {
+    gameToTest.newRound();
+    Object.values(gameToTest.players).forEach(player => {
+      const numCards = (player.id === gameToTest.activePlayerId) ? 2 : 1;
       expect(player.hand).toHaveLength(numCards);
       expect(player.hand[0].type).toBeGreaterThanOrEqual(0);
+    });
+  };
+
+  describe('for a 4-player game', () => {
+    it('creates a deck', () => {
+      game.newRound();
+      expect(game.deck).toHaveLength(15);
+    });
+
+    it('deals cards', () => {
+      itDealsCards(game);
+    });
+  });
+
+  describe('for an 8-player game', () => {
+    let expansionGame;
+
+    beforeEach(() => {
+      users = {
+        '1': new User('1'),
+        '2': new User('2'),
+        '3': new User('3'),
+        '4': new User('4'),
+        '5': new User('5'),
+        '6': new User('6'),
+        '7': new User('7'),
+        '8': new User('8'),
+      };
+      expansionGame = new Game({
+        broadcastToRoom: mockBroadcastToRoom,
+        broadcastSystemMessage: mockBroadcastSystemMessage,
+        broadcastToSocket: mockBroadcastToSocket,
+        users,
+      });
+      expansionGame.setup();
+    });
+
+    it('creates a deck', () => {
+      expansionGame.newRound();
+      expect(expansionGame.deck).toHaveLength(31);
+    });
+
+    it('deals cards', () => {
+      itDealsCards(expansionGame);
     });
   });
 });
