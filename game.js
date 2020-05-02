@@ -347,8 +347,8 @@ Game.prototype = {
     const finalists = [];
     const highestCardNumber = alivePlayers[alivePlayers.length - 1].hand[0].getNumber();
     for (let i = alivePlayers.length - 1; i >= 0; --i) {
-      const player = alivePlayers[i]
-      if (player.hand[0].getNumber() < highestCardNumber) {
+      const player = alivePlayers[i];
+      if (player.getFinalCardNumber() < highestCardNumber) {
         break;
       }
       console.log(`${player.name} is a finalist with a card number of ${player.hand[0].getNumber()}`);
@@ -562,6 +562,7 @@ Game.prototype = {
         break;
       case cards.COUNTESS:
       case cards.ASSASSIN:
+      case cards.COUNT:
         // effects handled elsewhere
         break;
       default:

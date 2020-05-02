@@ -1,3 +1,5 @@
+const { cards } = require('./constants');
+
 function Player({ id, name }) {
   this.id = id;
   this.name = name;
@@ -44,6 +46,11 @@ Player.prototype = {
   hasCard: function(cardType) { return !!this.hand.find(card => card.type === cardType); },
 
   setHandmaid: function(enabled) { this.handmaidActive = enabled; },
+
+  getFinalCardNumber: function() {
+    const numCountsInDiscard = this.discardPile.filter(card => card.type === cards.COUNT).length;
+    return this.hand[0].getNumber() + numCountsInDiscard;
+  },
 
   serialize: function ({ includeHand }) {
     const {
