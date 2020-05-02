@@ -23,15 +23,15 @@ Card.PRINCE = 4;
 Card.KING = 5;
 Card.COUNTESS = 6;
 Card.PRINCESS = 7;
-Card.ASSASSIN = 7;
-Card.JESTER = 7;
-Card.CARDINAL = 7;
-Card.BARONESS = 7;
-Card.SYCOPHANT = 7;
-Card.COUNT = 7;
-Card.CONSTABLE = 7;
-Card.DOWAGER_QUEEN = 7;
-Card.BISHOP = 7;
+Card.ASSASSIN = 8;
+Card.JESTER = 9;
+Card.CARDINAL = 10;
+Card.BARONESS = 11;
+Card.SYCOPHANT = 12;
+Card.COUNT = 13;
+Card.CONSTABLE = 14;
+Card.DOWAGER_QUEEN = 15;
+Card.BISHOP = 16;
 
 Card.labels = {
   [Card.GUARD]: 'Guard',

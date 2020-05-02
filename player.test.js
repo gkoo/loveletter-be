@@ -59,3 +59,38 @@ describe('getFinalCardNumber', () => {
     });
   });
 });
+
+describe('knockOut', () => {
+  it('moves hand to discard', () => {
+    player.hand.push(new Card({ id: 100, type: cards.GUARD }));
+    player.knockOut();
+    expect(player.hand).toHaveLength(0);
+    expect(player.discardPile).toHaveLength(1);
+    expect(player.discardPile[0].id).toEqual(100);
+  });
+
+  it('sets isKnockedOut to true', () => {
+    player.knockOut();
+    expect(player.isKnockedOut).toEqual(true);
+  });
+
+  describe('when Constable is NOT in discard', () => {
+    it('does not grant the player a token', () => {
+      expect(player.numTokens).toEqual(0);
+      player.knockOut();
+      expect(player.numTokens).toEqual(0);
+    });
+  });
+
+  describe('when Constable is in discard', () => {
+    beforeEach(() => {
+      player.discardPile.push(new Card({ id: 100, type: cards.CONSTABLE }));
+    });
+
+    it('grants the player a token', () => {
+      expect(player.numTokens).toEqual(0);
+      player.knockOut();
+      expect(player.numTokens).toEqual(1);
+    });
+  });
+});

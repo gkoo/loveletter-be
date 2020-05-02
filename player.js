@@ -1,5 +1,3 @@
-const { cards } = require('./constants');
-
 function Player({ id, name }) {
   this.id = id;
   this.name = name;
@@ -39,6 +37,9 @@ Player.prototype = {
     this.discardPile = this.discardPile.concat(this.hand);
     this.hand = [];
     this.isKnockedOut = true;
+
+    // If the player has a Constable in their discard, award a token
+    if (this.hasInDiscard(cards.CONSTABLE)) { ++this.numTokens; };
   },
 
   getCard: function(cardId) { return this.hand.find(card => card.id === cardId); },
@@ -46,6 +47,10 @@ Player.prototype = {
   hasCard: function(cardType) { return !!this.hand.find(card => card.type === cardType); },
 
   setHandmaid: function(enabled) { this.handmaidActive = enabled; },
+
+  hasInDiscard: function(cardType) {
+    return !!this.discardPile.find(card => card.type === cardType);
+  },
 
   getFinalCardNumber: function() {
     const numCountsInDiscard = this.discardPile.filter(card => card.type === cards.COUNT).length;

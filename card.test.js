@@ -3,7 +3,7 @@ const Card = require('./card');
 let card;
 
 beforeEach(() => {
-  card = new Card({ id: 11, type: Card.PRINCESS });
+  card = new Card({ id: 100, type: Card.PRINCESS });
 });
 
 describe('Card', () => {

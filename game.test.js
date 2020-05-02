@@ -673,4 +673,57 @@ describe('performCardEffect', () => {
       expect(player.isKnockedOut).toEqual(true);
     });
   });
+
+  describe('dowager queen', () => {
+    const dowagerQueenCard = new Card({ id: 1, type: cards.DOWAGER_QUEEN });
+
+    it('knocks out the player with the higher card', () => {
+      game.players['1'].hand = [
+        new Card({ id: 0, type: cards.PRINCESS }),
+        dowagerQueenCard,
+      ];
+      game.players['2'].hand = [
+        new Card({ id: 2, type: cards.KING }),
+      ];
+      game.activePlayerId = '1';
+      success = game.performCardEffect(dowagerQueenCard, { targetPlayerId: '2' });
+      expect(success).toEqual(true);
+      expect(game.players['1'].isKnockedOut).toEqual(true);
+      expect(game.players['2'].isKnockedOut).toEqual(false);
+    });
+
+    describe('when the cards are equal', () => {
+      it('doesn\'t kill anyone', () => {
+        game.players['1'].hand = [
+          new Card({ id: 0, type: cards.PRINCE }),
+          dowagerQueenCard,
+        ];
+        game.players['2'].hand = [
+          new Card({ id: 2, type: cards.PRINCE }),
+        ];
+        game.activePlayerId = '1';
+        success = game.performCardEffect(dowagerQueenCard, { targetPlayerId: '2' });
+        expect(success).toEqual(true);
+        expect(game.players['1'].isKnockedOut).toEqual(false);
+        expect(game.players['2'].isKnockedOut).toEqual(false);
+      });
+    });
+
+    describe('when the dowager queen is the first card in the hand', () => {
+      it('knocks out the player with the higher card', () => {
+        game.players['1'].hand = [
+          dowagerQueenCard,
+          new Card({ id: 0, type: cards.PRINCESS }),
+        ];
+        game.players['2'].hand = [
+          new Card({ id: 2, type: cards.KING }),
+        ];
+        game.activePlayerId = '1';
+        success = game.performCardEffect(dowagerQueenCard, { targetPlayerId: '2' });
+        expect(success).toEqual(true);
+        expect(game.players['1'].isKnockedOut).toEqual(true);
+        expect(game.players['2'].isKnockedOut).toEqual(false);
+      });
+    });
+  });
 });

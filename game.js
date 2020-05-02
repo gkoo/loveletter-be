@@ -24,7 +24,7 @@ Game.prototype = {
 
   MIN_PLAYERS: 2,
   MAX_PLAYERS: 8,
-  MIN_PLAYERS_FOR_EXPANSION: 5;
+  MIN_PLAYERS_FOR_EXPANSION: 5,
 
   setup: function() {
     const userList = Object.values(this.users);
@@ -461,6 +461,7 @@ Game.prototype = {
     // the card that the active player did not play
     const activePlayerOtherCardIdx = activePlayer.hand.findIndex(handCard => handCard.id !== card.id)
     const activePlayerOtherCard = activePlayer.hand[activePlayerOtherCardIdx];
+    let loser;
 
     switch (card.type) {
       case Card.GUARD:
@@ -516,7 +517,6 @@ Game.prototype = {
           return true;
         }
 
-        let loser;
         if (activePlayerOtherCard.getNumber() < targetPlayerCard.getNumber()) {
           loser = activePlayer;
         } else {
@@ -560,6 +560,32 @@ Game.prototype = {
         targetPlayer.jesterRecipientId = this.activePlayerId;
         broadcastMessage.push(`and predicted that ${targetPlayer.name} would win!`);
         break;
+      case cards.DOWAGER_QUEEN:
+        const dowagerQueenRevealData = [{
+          playerId: activePlayer.id,
+          card: activePlayerOtherCard,
+        }, {
+          playerId: targetPlayer.id,
+          card: targetPlayerCard,
+        }];
+        broadcastToSocket(activePlayer.id, 'dowagerQueenReveal', dowagerQueenRevealData);
+        broadcastToSocket(targetPlayer.id, 'dowagerQueenReveal', dowagerQueenRevealData);
+        broadcastMessage.push(`and compared cards with ${targetPlayer.name}`);
+
+        // Who died?
+        broadcastSystemMessage(broadcastMessage.join(' '));
+        if (activePlayerOtherCard.getNumber() === targetPlayerCard.getNumber()) {
+          broadcastSystemMessage('Nothing happened...');
+          return true;
+        }
+
+        if (activePlayerOtherCard.getNumber() > targetPlayerCard.getNumber()) {
+          loser = activePlayer;
+        } else {
+          loser = targetPlayer;
+        }
+        knockOut(loser);
+        return true;
       case cards.COUNTESS:
       case cards.ASSASSIN:
       case cards.COUNT:
@@ -584,7 +610,12 @@ Game.prototype = {
 
   knockOut: function(player) {
     player.knockOut();
-    this.broadcastSystemMessage(`${player.name} was knocked out of the round!`);
+
+    if (player.hasInDiscard(cards.CONSTABLE)) {
+      this.broadcastSystemMessage(`${player.name} was knocked out of the round and earned a token!`);
+    } else {
+      this.broadcastSystemMessage(`${player.name} was knocked out of the round!`);
+    }
   },
 
   emitSystemMessage: function(playerId, msg) {
