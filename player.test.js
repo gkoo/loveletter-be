@@ -29,7 +29,7 @@ describe('getFinalCardNumber', () => {
   const subject = () => player.getFinalCardNumber();
 
   beforeEach(() => {
-    player.hand.push(new Card({ id: 100, type: cards.KING }));
+    player.hand.push(new Card({ id: 100, type: Card.KING }));
   });
 
   describe('without Count in the discard', () => {
@@ -40,7 +40,7 @@ describe('getFinalCardNumber', () => {
 
   describe('with a Count in the discard', () => {
     beforeEach(() => {
-      player.discardPile.push(new Card({ id: 101, type: cards.COUNT }));
+      player.discardPile.push(new Card({ id: 101, type: Card.COUNT }));
     });
 
     it('adds one to the raw number', () => {
@@ -50,8 +50,8 @@ describe('getFinalCardNumber', () => {
 
   describe('with two Counts in the discard', () => {
     beforeEach(() => {
-      player.discardPile.push(new Card({ id: 101, type: cards.COUNT }));
-      player.discardPile.push(new Card({ id: 102, type: cards.COUNT }));
+      player.discardPile.push(new Card({ id: 101, type: Card.COUNT }));
+      player.discardPile.push(new Card({ id: 102, type: Card.COUNT }));
     });
 
     it('adds one to the raw number', () => {
@@ -62,7 +62,7 @@ describe('getFinalCardNumber', () => {
 
 describe('knockOut', () => {
   it('moves hand to discard', () => {
-    player.hand.push(new Card({ id: 100, type: cards.GUARD }));
+    player.hand.push(new Card({ id: 100, type: Card.GUARD }));
     player.knockOut();
     expect(player.hand).toHaveLength(0);
     expect(player.discardPile).toHaveLength(1);
@@ -84,7 +84,7 @@ describe('knockOut', () => {
 
   describe('when Constable is in discard', () => {
     beforeEach(() => {
-      player.discardPile.push(new Card({ id: 100, type: cards.CONSTABLE }));
+      player.discardPile.push(new Card({ id: 100, type: Card.CONSTABLE }));
     });
 
     it('grants the player a token', () => {

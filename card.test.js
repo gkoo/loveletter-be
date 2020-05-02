@@ -9,7 +9,7 @@ beforeEach(() => {
 describe('Card', () => {
   it('makes a card', () => {
     expect(card.type).toEqual(Card.PRINCESS);
-    expect(card.id).toEqual(11);
+    expect(card.id).toEqual(100);
   });
 
   describe('getLabel', () => {

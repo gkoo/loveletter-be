@@ -63,9 +63,9 @@ describe('newRound', () => {
         '8': new User('8'),
       };
       game = new Game({
+        broadcastTo: mockBroadcastTo,
         broadcastToRoom: mockBroadcastToRoom,
         broadcastSystemMessage: mockBroadcastSystemMessage,
-        broadcastToSocket: mockBroadcastToSocket,
         users,
       });
       game.setup();
@@ -254,10 +254,10 @@ describe('endRound', () => {
   });
 
   it('assigns a token for any jester recipients', () => {
-    game.players['1'].hand = [new Card({ id: 100, type: cards.GUARD})];
-    game.players['2'].hand = [new Card({ id: 101, type: cards.PRINCESS})];
+    game.players['1'].hand = [new Card({ id: 100, type: Card.GUARD})];
+    game.players['2'].hand = [new Card({ id: 101, type: Card.PRINCESS})];
     game.players['2'].jesterRecipientId = '1';
-    game.players['3'].hand = [new Card({ id: 102, type: cards.GUARD})];
+    game.players['3'].hand = [new Card({ id: 102, type: Card.GUARD})];
     game.endRound();
     expect(game.players['1'].numTokens).toEqual(1);
   });
@@ -433,9 +433,9 @@ describe('performCardEffect', () => {
         game.activePlayerId = '1';
         const { players } = game;
         players['1'].discardPile = [];
-        const guardCard = new Card({ id: 102, type: cards.GUARD });
+        const guardCard = new Card({ id: 102, type: Card.GUARD });
         players['1'].hand = [guardCard];
-        players['2'].hand[0] = new Card({ id: 101, type: cards.ASSASSIN });
+        players['2'].hand[0] = new Card({ id: 101, type: Card.ASSASSIN });
         const success = game.performCardEffect(guardCard, { targetPlayerId: '2' });
         expect(success).toEqual(true);
         expect(players['1'].isKnockedOut).toEqual(true);
@@ -675,15 +675,15 @@ describe('performCardEffect', () => {
   });
 
   describe('dowager queen', () => {
-    const dowagerQueenCard = new Card({ id: 1, type: cards.DOWAGER_QUEEN });
+    const dowagerQueenCard = new Card({ id: 1, type: Card.DOWAGER_QUEEN });
 
     it('knocks out the player with the higher card', () => {
       game.players['1'].hand = [
-        new Card({ id: 0, type: cards.PRINCESS }),
+        new Card({ id: 0, type: Card.PRINCESS }),
         dowagerQueenCard,
       ];
       game.players['2'].hand = [
-        new Card({ id: 2, type: cards.KING }),
+        new Card({ id: 2, type: Card.KING }),
       ];
       game.activePlayerId = '1';
       success = game.performCardEffect(dowagerQueenCard, { targetPlayerId: '2' });
@@ -695,11 +695,11 @@ describe('performCardEffect', () => {
     describe('when the cards are equal', () => {
       it('doesn\'t kill anyone', () => {
         game.players['1'].hand = [
-          new Card({ id: 0, type: cards.PRINCE }),
+          new Card({ id: 0, type: Card.PRINCE }),
           dowagerQueenCard,
         ];
         game.players['2'].hand = [
-          new Card({ id: 2, type: cards.PRINCE }),
+          new Card({ id: 2, type: Card.PRINCE }),
         ];
         game.activePlayerId = '1';
         success = game.performCardEffect(dowagerQueenCard, { targetPlayerId: '2' });
@@ -713,10 +713,10 @@ describe('performCardEffect', () => {
       it('knocks out the player with the higher card', () => {
         game.players['1'].hand = [
           dowagerQueenCard,
-          new Card({ id: 0, type: cards.PRINCESS }),
+          new Card({ id: 0, type: Card.PRINCESS }),
         ];
         game.players['2'].hand = [
-          new Card({ id: 2, type: cards.KING }),
+          new Card({ id: 2, type: Card.KING }),
         ];
         game.activePlayerId = '1';
         success = game.performCardEffect(dowagerQueenCard, { targetPlayerId: '2' });

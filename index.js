@@ -17,8 +17,7 @@ app.get('/', (req, res) => res.send('Hello World!'))
 const ROOM_CODE_PREFIX = 'room-';
 
 // Callbacks to pass to room
-const emitToSocket = (socketId, eventName, data) =>
-  io.sockets.connected[socketId] && io.sockets.connected[socketId].emit(eventName, data);
+const emitToSocket = (socketId, eventName, data) => io.to(socketId).emit(eventName, data);
 
 const rooms = {};
 

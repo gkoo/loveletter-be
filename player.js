@@ -1,3 +1,5 @@
+const Card = require('./card');
+
 function Player({ id, name }) {
   this.id = id;
   this.name = name;
@@ -39,7 +41,7 @@ Player.prototype = {
     this.isKnockedOut = true;
 
     // If the player has a Constable in their discard, award a token
-    if (this.hasInDiscard(cards.CONSTABLE)) { ++this.numTokens; };
+    if (this.hasInDiscard(Card.CONSTABLE)) { ++this.numTokens; };
   },
 
   getCard: function(cardId) { return this.hand.find(card => card.id === cardId); },
@@ -53,7 +55,7 @@ Player.prototype = {
   },
 
   getFinalCardNumber: function() {
-    const numCountsInDiscard = this.discardPile.filter(card => card.type === cards.COUNT).length;
+    const numCountsInDiscard = this.discardPile.filter(card => card.type === Card.COUNT).length;
     return this.hand[0].getNumber() + numCountsInDiscard;
   },
 

@@ -106,7 +106,7 @@ Game.prototype = {
     ];
 
     // Expansion
-    if (this.getPlayers().length >= MIN_PLAYERS_FOR_EXPANSION) {
+    if (this.getPlayers().length >= this.MIN_PLAYERS_FOR_EXPANSION) {
       cardTypesToAdd = [
         ...cardTypesToAdd,
         Card.ASSASSIN,
@@ -472,13 +472,13 @@ Game.prototype = {
           return guardNumberGuess === Card.numbers[cardType];
         }).map(card => parseInt(card, 10)); // for some reason it gets turned into a string
 
-        if (targetPlayer.hand[0].type === cards.ASSASSIN) {
+        if (targetPlayer.hand[0].type === Card.ASSASSIN) {
           // Active player is knocked out, target player draws new card
           broadcastMessage.push('but crossed paths with an Assassin!');
-          broadcastSystemMessage(broadcastMessage.join(' '));
-          knockOut(activePlayer);
+          this.broadcastSystemMessage(broadcastMessage.join(' '));
+          this.knockOut(activePlayer);
           targetPlayer.discardCardById(targetPlayerCard.id);
-          drawCard({ player: targetPlayer, canUseBurnCard: true });
+          this.drawCard({ player: targetPlayer, canUseBurnCard: true });
           return true;
         }
         if (guardGuessCardTypes.includes(targetPlayer.hand[0].type)) {
@@ -556,11 +556,11 @@ Game.prototype = {
         activePlayer.setHandmaid(true);
         broadcastMessage.push('and is immune from card effects until their next turn');
         break;
-      case cards.JESTER:
+      case Card.JESTER:
         targetPlayer.jesterRecipientId = this.activePlayerId;
         broadcastMessage.push(`and predicted that ${targetPlayer.name} would win!`);
         break;
-      case cards.DOWAGER_QUEEN:
+      case Card.DOWAGER_QUEEN:
         const dowagerQueenRevealData = [{
           playerId: activePlayer.id,
           card: activePlayerOtherCard,
@@ -568,14 +568,14 @@ Game.prototype = {
           playerId: targetPlayer.id,
           card: targetPlayerCard,
         }];
-        broadcastToSocket(activePlayer.id, 'dowagerQueenReveal', dowagerQueenRevealData);
-        broadcastToSocket(targetPlayer.id, 'dowagerQueenReveal', dowagerQueenRevealData);
+        this.broadcastTo(activePlayer.id, 'dowagerQueenReveal', dowagerQueenRevealData);
+        this.broadcastTo(targetPlayer.id, 'dowagerQueenReveal', dowagerQueenRevealData);
         broadcastMessage.push(`and compared cards with ${targetPlayer.name}`);
 
         // Who died?
-        broadcastSystemMessage(broadcastMessage.join(' '));
+        this.broadcastSystemMessage(broadcastMessage.join(' '));
         if (activePlayerOtherCard.getNumber() === targetPlayerCard.getNumber()) {
-          broadcastSystemMessage('Nothing happened...');
+          this.broadcastSystemMessage('Nothing happened...');
           return true;
         }
 
@@ -584,11 +584,11 @@ Game.prototype = {
         } else {
           loser = targetPlayer;
         }
-        knockOut(loser);
+        this.knockOut(loser);
         return true;
-      case cards.COUNTESS:
-      case cards.ASSASSIN:
-      case cards.COUNT:
+      case Card.COUNTESS:
+      case Card.ASSASSIN:
+      case Card.COUNT:
         // effects handled elsewhere
         break;
       default:
@@ -611,7 +611,7 @@ Game.prototype = {
   knockOut: function(player) {
     player.knockOut();
 
-    if (player.hasInDiscard(cards.CONSTABLE)) {
+    if (player.hasInDiscard(Card.CONSTABLE)) {
       this.broadcastSystemMessage(`${player.name} was knocked out of the round and earned a token!`);
     } else {
       this.broadcastSystemMessage(`${player.name} was knocked out of the round!`);
