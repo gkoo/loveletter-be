@@ -7,6 +7,8 @@ function Player({ id, name }) {
   this.isKnockedOut = false;
   this.handmaidActive = false;
   this.connected = true;
+  // The player who receives a token of affection of this player wins the round
+  this.jesterRecipientId = null;
 }
 
 Player.prototype = {
@@ -23,10 +25,11 @@ Player.prototype = {
     this.discardPile = this.discardPile.concat(discardedCards);
   },
 
-  resetCards: function() {
+  resetForNewRound: function() {
     this.hand = [];
     this.discardPile = [];
     this.isKnockedOut = false;
+    this.jesterRecipientId = null;
   },
 
   // Take the player out of the round

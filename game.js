@@ -70,7 +70,7 @@ Game.prototype = {
 
     this.state = this.STATE_STARTED;
     ++this.roundNum;
-    this.getPlayers().forEach(player => player.resetCards());
+    this.getPlayers().forEach(player => player.resetForNewRound());
 
     // keeps track of how far through the deck we are
     this.deckCursor = 0;
@@ -300,7 +300,21 @@ Game.prototype = {
     const roundWinners = this.determineRoundWinners();
 
     const roundEndMsg = `${roundWinners.map(winner => winner.name).join(' and ')} won the round!`;
-    this.broadcastSystemMessage(roundEndMsg);
+
+    this.broadcastSystemMessage(
+      `${roundWinners.map(winner => winner.name).join(' and ')} won the round!`
+    );
+
+    // Resolve jester token
+    roundWinners.forEach(winner => {
+      if (!winner.jesterRecipientId) {
+        return;
+      }
+
+      const jesterRecipient = this.players[winner.jesterRecipientId];
+      ++jesterRecipient.numTokens;
+      this.broadcastSystemMessage(`${jesterRecipient} received a token for predicting the winner!`);
+    });
 
     const isGameOver = false;
     const gameWinners = roundWinners.filter(
@@ -542,7 +556,12 @@ Game.prototype = {
         activePlayer.setHandmaid(true);
         broadcastMessage.push('and is immune from card effects until their next turn');
         break;
-      case Card.COUNTESS:
+      case cards.JESTER:
+        targetPlayer.jesterRecipientId = this.activePlayerId;
+        broadcastMessage.push(`and predicted that ${targetPlayer.name} would win!`);
+        break;
+      case cards.COUNTESS:
+      case cards.ASSASSIN:
         // effects handled elsewhere
         break;
       default:

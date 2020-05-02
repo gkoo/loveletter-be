@@ -24,15 +24,14 @@ beforeEach(() => {
     broadcastTo: mockBroadcastTo,
     users,
   });
-  baseGame.setup();
-  game = baseGame;
+  game.setup();
 });
 
 describe('newRound', () => {
-  const itDealsCards = (gameToTest) => {
-    gameToTest.newRound();
-    Object.values(gameToTest.players).forEach(player => {
-      const numCards = (player.id === gameToTest.activePlayerId) ? 2 : 1;
+  const itDealsCards = () => {
+    game.newRound();
+    Object.values(game.players).forEach(player => {
+      const numCards = (player.id === game.activePlayerId) ? 2 : 1;
       expect(player.hand).toHaveLength(numCards);
       expect(player.hand[0].type).toBeGreaterThanOrEqual(0);
     });
@@ -45,12 +44,12 @@ describe('newRound', () => {
     });
 
     it('deals cards', () => {
-      itDealsCards(game);
+      itDealsCards();
     });
   });
 
   describe('for an 8-player game', () => {
-    let expansionGame;
+    let game;
 
     beforeEach(() => {
       users = {
@@ -63,22 +62,33 @@ describe('newRound', () => {
         '7': new User('7'),
         '8': new User('8'),
       };
-      expansionGame = new Game({
+      game = new Game({
         broadcastToRoom: mockBroadcastToRoom,
         broadcastSystemMessage: mockBroadcastSystemMessage,
         broadcastToSocket: mockBroadcastToSocket,
         users,
       });
-      expansionGame.setup();
+      game.setup();
     });
 
     it('creates a deck', () => {
-      expansionGame.newRound();
-      expect(expansionGame.deck).toHaveLength(31);
+      game.newRound();
+      expect(game.deck).toHaveLength(31);
     });
 
     it('deals cards', () => {
-      itDealsCards(expansionGame);
+      itDealsCards();
+    });
+  });
+
+  describe('when a player has a jester token', () => {
+    beforeEach(() => {
+      game.players['1'].jesterRecipientId = '3';
+    });
+
+    it('clears the jester token', () => {
+      game.newRound();
+      expect(game.players['1'].jesterRecipientId).toEqual(null);
     });
   });
 });
@@ -241,6 +251,15 @@ describe('endRound', () => {
     expect(game.players['1'].numTokens).toEqual(0);
     expect(game.players['2'].numTokens).toEqual(1);
     expect(game.players['3'].numTokens).toEqual(0);
+  });
+
+  it('assigns a token for any jester recipients', () => {
+    game.players['1'].hand = [new Card({ id: 100, type: cards.GUARD})];
+    game.players['2'].hand = [new Card({ id: 101, type: cards.PRINCESS})];
+    game.players['2'].jesterRecipientId = '1';
+    game.players['3'].hand = [new Card({ id: 102, type: cards.GUARD})];
+    game.endRound();
+    expect(game.players['1'].numTokens).toEqual(1);
   });
 });
 
