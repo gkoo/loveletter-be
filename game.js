@@ -235,7 +235,7 @@ Game.prototype = {
 
     const success = this.performCardEffect(card, effectData);
 
-    // Tell FE what card was played and who was targeted, if applicable
+    // Tell client what card was played and who was targeted, if applicable
     this.broadcastToRoom('lastCardPlayed', {
       playerId: this.activePlayerId,
       card,
@@ -457,6 +457,15 @@ Game.prototype = {
           return guardNumberGuess === Card.numbers[cardType];
         }).map(card => parseInt(card, 10)); // for some reason it gets turned into a string
 
+        if (targetPlayer.hand[0].type === cards.ASSASSIN) {
+          // Active player is knocked out, target player draws new card
+          broadcastMessage.push('but crossed paths with an Assassin!');
+          broadcastSystemMessage(broadcastMessage.join(' '));
+          knockOut(activePlayer);
+          targetPlayer.discardCardById(targetPlayerCard.id);
+          drawCard({ player: targetPlayer, canUseBurnCard: true });
+          return true;
+        }
         if (guardGuessCardTypes.includes(targetPlayer.hand[0].type)) {
           // Dead!
           this.broadcastSystemMessage(broadcastMessage.join(' '));

@@ -408,6 +408,21 @@ describe('performCardEffect', () => {
         expect(game.players['3'].isKnockedOut).toEqual(false);
       });
     });
+
+    describe('when the target player is holding the Assassin', () => {
+      it('knocks out the active player and discards and draws a new card for the target player', () => {
+        game.activePlayerId = '1';
+        const { players } = game;
+        players['1'].discardPile = [];
+        const guardCard = new Card({ id: 102, type: cards.GUARD });
+        players['1'].hand = [guardCard];
+        players['2'].hand[0] = new Card({ id: 101, type: cards.ASSASSIN });
+        const success = game.performCardEffect(guardCard, { targetPlayerId: '2' });
+        expect(success).toEqual(true);
+        expect(players['1'].isKnockedOut).toEqual(true);
+        expect(players['2'].hand[0].id).not.toEqual(101);
+      });
+    });
   });
 
   describe('baron', () => {
