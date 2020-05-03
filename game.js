@@ -14,6 +14,7 @@ function Game({
   this.broadcastSystemMessage = broadcastSystemMessage;
   this.broadcastTo = broadcastTo;
   this.users = users;
+  this.sycophantTargetId = null;
 }
 
 Game.prototype = {
@@ -69,6 +70,7 @@ Game.prototype = {
     if (![this.STATE_STARTED, this.STATE_ROUND_END].includes(this.state)) { return; }
 
     this.state = this.STATE_STARTED;
+    this.sycophantTargetId = null;
     ++this.roundNum;
     this.getPlayers().forEach(player => player.resetForNewRound());
 
@@ -196,6 +198,8 @@ Game.prototype = {
       this.endRound();
       return;
     }
+
+    this.sycophantTargetId = null;
 
     // Advance the playerOrderCursor
     let nextPlayer;
@@ -427,18 +431,21 @@ Game.prototype = {
     const statusMessage = `${activePlayer.name} played ${card.getLabel()}`;
     console.log(statusMessage);
 
-    const targetPlayer = (
-      effectData && effectData.targetPlayerId ?
-        this.players[effectData.targetPlayerId] :
-        undefined
-    );
-
-    const cardsWithTargets = [Card.GUARD, Card.PRIEST, Card.BARON, Card.PRINCE, Card.KING];
+    let targetPlayer;
+    if (this.sycophantTargetId) {
+      targetPlayer = this.players[this.sycophantTargetId];
+    } else {
+      targetPlayer = (
+        effectData && effectData.targetPlayerId ?
+          this.players[effectData.targetPlayerId] :
+          undefined
+      );
+    }
 
     activePlayer.setHandmaid(false);
 
     // Do all alive players have handmaids?
-    if (cardsWithTargets.includes(card.type) && this.allAlivePlayersHaveHandmaids()) {
+    if (Game.CARDS_WITH_TARGET_EFFECTS.includes(card.type) && this.allAlivePlayersHaveHandmaids()) {
       // Prince card is allowed to target self
       if (card.type !== Card.PRINCE || targetPlayer.id !== activePlayer.id) {
         console.log('all players have handmaids. discarding...');
@@ -560,6 +567,9 @@ Game.prototype = {
         targetPlayer.jesterRecipientId = this.activePlayerId;
         broadcastMessage.push(`and predicted that ${targetPlayer.name} would win!`);
         break;
+      case Card.SYCOPHANT:
+        this.sycophantTargetId = targetPlayer.id;
+        broadcastMessage.push(`and forced the next card played to target ${targetPlayer.name}!`);
       case Card.DOWAGER_QUEEN:
         const dowagerQueenRevealData = [{
           playerId: activePlayer.id,
@@ -690,6 +700,20 @@ Game.prototype = {
       state,
     };
   },
-}
+};
+
+Game.CARDS_WITH_TARGET_EFFECTS = [
+  Card.GUARD,
+  Card.PRIEST,
+  Card.BARON,
+  Card.PRINCE,
+  Card.KING,
+  Card.JESTER,
+  Card.CARDINAL,
+  Card.BARONESS,
+  Card.SYCOPHANT,
+  Card.DOWAGER_QUEEN,
+  Card.BISHOP,
+];
 
 module.exports = Game;
