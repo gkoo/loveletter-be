@@ -472,11 +472,11 @@ Game.prototype = {
 
     switch (card.type) {
       case Card.GUARD:
-        const { guardNumberGuess } = effectData;
-        broadcastMessage.push(`and guessed ${targetPlayer.name} has a ${guardNumberGuess} card`);
+        const { cardNumberGuess } = effectData;
+        broadcastMessage.push(`and guessed ${targetPlayer.name} has a ${cardNumberGuess} card`);
 
         const guardGuessCardTypes = Object.keys(Card.numbers).filter(cardType => {
-          return guardNumberGuess === Card.numbers[cardType];
+          return cardNumberGuess === Card.numbers[cardType];
         }).map(card => parseInt(card, 10)); // for some reason it gets turned into a string
 
         if (targetPlayer.hand[0].type === Card.ASSASSIN) {
