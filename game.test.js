@@ -252,6 +252,18 @@ describe('playCard', () => {
       });
     });
   });
+
+  describe('the active player had handmaid status from previous turn', () => {
+    it('removes the active player\'s handmaid status', () => {
+      game.activePlayerId = '1';
+      const player1 = game.players['1'];
+      const card = new Card({ id: 0, type: Card.COUNTESS });
+      player1.hand = [card, new Card({ id: 100, type: Card.GUARD })];
+      player1.handmaidActive = true;
+      game.playCard('1', card.id);
+      expect(player1.handmaidActive).toEqual(false);
+    });
+  });
 });
 
 describe('serializeForPlayer', () => {
@@ -364,7 +376,7 @@ describe('performCardEffect', () => {
     describe('when all other players have a handmaid', () => {
       it('has no effect', () => {
         game.activePlayerId = '1';
-        const card = new Card({ id: 0, type: Card.PRINCE });
+        const card = new Card({ id: 0, type: Card.PRIEST });
         game.players['1'].hand = [card];
         game.players['2'].handmaidActive = true;
         game.players['3'].hand = [
@@ -375,21 +387,7 @@ describe('performCardEffect', () => {
         expect(success).toEqual(false);
         expect(game.players['3'].hand).toHaveLength(1);
         expect(game.players['3'].hand[0].type).toEqual(Card.PRINCESS);
-        expect(game.players['1'].hand[0].type).toEqual(Card.PRINCE);
-      });
-
-      describe('and the active player had handmaid status from previous turn', () => {
-        it('removes the active player\'s handmaid status', () => {
-          game.activePlayerId = '1';
-          const card = new Card({ id: 0, type: Card.GUARD });
-          game.players['1'].hand = [card];
-          game.players['1'].handmaidActive = true;
-          game.players['2'].handmaidActive = true;
-          game.players['3'].handmaidActive = true;
-          const success = game.performCardEffect(card);
-          expect(success).toEqual(false);
-          expect(game.players['1'].handmaidActive).toEqual(false);
-        });
+        expect(game.players['1'].hand[0].type).toEqual(Card.PRIEST);
       });
     });
 
@@ -397,7 +395,7 @@ describe('performCardEffect', () => {
       describe('and one player doesn\'t have a handmaid but they are already knocked out', () => {
         it('has no effect', () => {
           game.activePlayerId = '1';
-          const card = new Card({ id: 0, type: Card.PRINCE });
+          const card = new Card({ id: 0, type: Card.PRIEST });
           game.players['1'].hand = [card];
           game.players['2'].handmaidActive = true;
           game.players['2'].hand = [
@@ -410,7 +408,7 @@ describe('performCardEffect', () => {
           expect(success).toEqual(false);
           expect(game.players['2'].hand).toHaveLength(1);
           expect(game.players['2'].hand[0].type).toEqual(Card.PRINCESS);
-          expect(game.players['1'].hand[0].type).toEqual(Card.PRINCE);
+          expect(game.players['1'].hand[0].type).toEqual(Card.PRIEST);
         });
       });
     });
@@ -458,7 +456,7 @@ describe('performCardEffect', () => {
         game.activePlayerId = '1';
         game.players['3'].hand = [new Card({ id: 1, type: Card.BARON })];
         const guardCard = new Card({ id: 0, type: Card.GUARD });
-        const effectData = { targetPlayerId: '3', guardNumberGuess: 3 };
+        const effectData = { targetPlayerId: '3', cardNumberGuess: 3 };
         game.performCardEffect(guardCard, effectData);
         expect(game.players['3'].isKnockedOut).toEqual(true);
       });
@@ -469,7 +467,7 @@ describe('performCardEffect', () => {
         game.activePlayerId = '1';
         game.players['3'].hand = [new Card({ id: 1, type: Card.BARON })];
         const guardCard = new Card({ id: 0, type: Card.GUARD });
-        const effectData = { targetPlayerId: '3', guardNumberGuess: 8 };
+        const effectData = { targetPlayerId: '3', cardNumberGuess: 8 };
         game.performCardEffect(guardCard, effectData);
         expect(game.players['3'].isKnockedOut).toEqual(false);
       });

@@ -237,6 +237,8 @@ Game.prototype = {
       return;
     }
 
+    player.setHandmaid(false);
+
     const success = this.performCardEffect(card, effectData);
 
     // Tell client what card was played and who was targeted, if applicable
@@ -424,8 +426,8 @@ Game.prototype = {
 
   isGameOver: function() { return this.state === this.STATE_GAME_END; },
 
-  // Returns true if card effect was performed successfully, false otherwise.
-  performCardEffect: function (card, effectData) {
+  // Returns true if card effect was performed successfully, false otherwise (it was discarded).
+  performCardEffect: function(card, effectData) {
     const activePlayer = this.players[this.activePlayerId];
 
     const statusMessage = `${activePlayer.name} played ${card.getLabel()}`;
@@ -442,16 +444,10 @@ Game.prototype = {
       );
     }
 
-    activePlayer.setHandmaid(false);
-
-    // Do all alive players have handmaids?
-    if (Game.CARDS_WITH_TARGET_EFFECTS.includes(card.type) && this.allAlivePlayersHaveHandmaids()) {
-      // Prince card is allowed to target self
-      if (card.type !== Card.PRINCE || targetPlayer.id !== activePlayer.id) {
-        console.log('all players have handmaids. discarding...');
-        this.broadcastSystemMessage(`${activePlayer.name} discarded ${card.getLabel()}`);
-        return false;
-      }
+    // Get potential targets
+    if (this.mustDiscard(card)) {
+      this.broadcastSystemMessage(`${activePlayer.name} discarded ${card.getLabel()}`);
+      return false;
     }
 
     const broadcastMessage = [statusMessage];
@@ -567,6 +563,8 @@ Game.prototype = {
         targetPlayer.jesterRecipientId = this.activePlayerId;
         broadcastMessage.push(`and predicted that ${targetPlayer.name} would win!`);
         break;
+      case Card.CARDINAL:
+        break;
       case Card.SYCOPHANT:
         this.sycophantTargetId = targetPlayer.id;
         broadcastMessage.push(`and forced the next card played to target ${targetPlayer.name}!`);
@@ -596,6 +594,8 @@ Game.prototype = {
         }
         this.knockOut(loser);
         return true;
+      case Card.BISHOP:
+        break;
       case Card.COUNTESS:
       case Card.ASSASSIN:
       case Card.COUNT:
@@ -608,6 +608,44 @@ Game.prototype = {
     this.broadcastSystemMessage(broadcastMessage.join(' '));
 
     return true;
+  },
+
+  mustDiscard: function(card) {
+    const alivePlayers = Object.values(this.players).filter(player => !player.isKnockedOut);
+    let potentialTargets;
+
+    if (!Game.CARDS_WITH_TARGET_EFFECTS.includes(card.type)) {
+      // Has no target effects
+      return false;
+    }
+
+    switch (card.type) {
+      case Card.CARDINAL:
+        potentialTargets = alivePlayers.filter(player =>
+          !player.handmaidActive || player.id === this.activePlayerId
+        );
+        return potentialTargets.length < 2;
+      default:
+        const alivePlayersWithoutHandmaid = alivePlayers.filter(
+          player => !player.handmaidActive
+        );
+
+        let potentialTargets = alivePlayersWithoutHandmaid;
+
+        if (card.type !== Card.PRINCE) {
+          // Remove self from potential targets
+          potentialTargets = potentialTargets.filter(
+            player => player.id !== this.activePlayerId
+          );
+        }
+
+        if (potentialTargets.length === 0) {
+          console.log('all players have handmaids.');
+          return true;
+        }
+
+        return false;
+    }
   },
 
   allAlivePlayersHaveHandmaids: function() {
