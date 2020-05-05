@@ -433,16 +433,24 @@ Game.prototype = {
     const statusMessage = `${activePlayer.name} played ${card.getLabel()}`;
     console.log(statusMessage);
 
-    let targetPlayer;
+    // Enforce sycophant target
     if (this.sycophantTargetId) {
-      targetPlayer = this.players[this.sycophantTargetId];
-    } else {
-      targetPlayer = (
-        effectData && effectData.targetPlayerId ?
-          this.players[effectData.targetPlayerId] :
-          undefined
-      );
+      if (card.type === Card.CARDINAL || card.type === Card.BARONESS) {
+        if (!effectData.multiTargetPlayerIds.includes(this.sycophantTargetId)) {
+          throw `Sycophant target id ${this.sycophantTargetId} was not one of the target ids!`;
+        }
+      } else {
+        if (!effectData.targetPlayerId !== this.sycophantTargetId) {
+          throw `Sycophant target id ${this.sycophantTargetId} was not the target id!`;
+        }
+      }
     }
+
+    const targetPlayer = (
+      effectData && effectData.targetPlayerId ?
+        this.players[effectData.targetPlayerId] :
+        undefined
+    );
 
     // Get potential targets
     if (this.mustDiscard(card)) {
@@ -452,18 +460,19 @@ Game.prototype = {
 
     const broadcastMessage = [statusMessage];
 
+    // the card that the active player did not play
+    const activePlayerOtherCardIdx = activePlayer.hand.findIndex(handCard => handCard.id !== card.id)
+    const activePlayerOtherCard = activePlayer.hand[activePlayerOtherCardIdx];
+
     let targetPlayerCard;
     if (targetPlayer) {
       // Prince is allowed to target self. Choose the correct target card
       if (targetPlayer.id === activePlayer.id) {
-        targetPlayerCard = activePlayer.hand.find(handCard => handCard.id !== card.id);
+        targetPlayerCard = activePlayerOtherCard;
       } else {
         targetPlayerCard = targetPlayer.hand[0];
       }
     }
-    // the card that the active player did not play
-    const activePlayerOtherCardIdx = activePlayer.hand.findIndex(handCard => handCard.id !== card.id)
-    const activePlayerOtherCard = activePlayer.hand[activePlayerOtherCardIdx];
     let loser;
 
     switch (card.type) {
@@ -495,7 +504,10 @@ Game.prototype = {
         break;
       case Card.PRIEST:
         console.log('revealing for priest');
-        this.broadcastTo(activePlayer.id, 'priestReveal', targetPlayerCard);
+        this.broadcastTo(activePlayer.id, 'singleCardReveal', {
+          label: `${targetPlayer.name} is holding`,
+          card: targetPlayerCard,
+        });
         const priestRevealMessage = `(Only visible to you) ${targetPlayer.name} is holding the ` +
           `${targetPlayerCard.getLabel()}!`;
         this.emitSystemMessage(activePlayer.id, priestRevealMessage);
@@ -564,7 +576,42 @@ Game.prototype = {
         broadcastMessage.push(`and predicted that ${targetPlayer.name} would win!`);
         break;
       case Card.CARDINAL:
-        break;
+        const targetsToSwitch = effectData.multiTargetPlayerIds.map(id => this.players[id]);
+        const targetToRevealCard = effectData.targetPlayerId;
+        const target1 = targetsToSwitch[0];
+        const target2 = targetsToSwitch[1];
+        const target1OriginalCard = target1.hand[0];
+        const target2OriginalCard = target2.hand[0];
+
+        // Switch the cards!
+        if (targetsToSwitch.includes(activePlayer)) {
+          const otherTarget = targetsToSwitch.find(player => player.id !== this.activePlayerId);
+          const otherTargetCard = otherTarget.hand[0];
+          otherTarget.hand[0] = activePlayerOtherCard;
+          activePlayer.hand[activePlayerOtherCardIdx] = otherTargetCard;
+        } else {
+          target1.hand[0] = target2OriginalCard;
+          target2.hand[0] = target1OriginalCard;
+        }
+
+        // Reveal the card!
+        this.broadcastSystemMessage(broadcastMessage.join(' '));
+        const cardinalSwitchData = [{
+          name: target1.name,
+          card: target1OriginalCard,
+        }, {
+          name: target2.name,
+          card: target2OriginalCard,
+        }];
+        this.broadcastTo(target1.id, 'switchCardData', cardinalSwitchData);
+        this.broadcastTo(target2.id, 'switchCardData', cardinalSwitchData);
+        if (!targetsToSwitch.includes(activePlayer)) {
+          // TODO: emit reveal data
+        }
+        return {
+          success: true,
+          message: broadcastMessage.join(' ')
+        };
       case Card.SYCOPHANT:
         this.sycophantTargetId = targetPlayer.id;
         broadcastMessage.push(`and forced the next card played to target ${targetPlayer.name}!`);
@@ -593,7 +640,10 @@ Game.prototype = {
           loser = targetPlayer;
         }
         this.knockOut(loser);
-        return true;
+        return {
+          success: true,
+          message: broadcastMessage.join(' '),
+        };
       case Card.BISHOP:
         break;
       case Card.COUNTESS:
@@ -607,12 +657,15 @@ Game.prototype = {
 
     this.broadcastSystemMessage(broadcastMessage.join(' '));
 
-    return true;
+    return {
+      success: true,
+      message: broadcastMessage.join(' '),
+    };
   },
 
   mustDiscard: function(card) {
     const alivePlayers = Object.values(this.players).filter(player => !player.isKnockedOut);
-    let potentialTargets;
+    let potentialTargets = [];
 
     if (!Game.CARDS_WITH_TARGET_EFFECTS.includes(card.type)) {
       // Has no target effects
@@ -630,7 +683,7 @@ Game.prototype = {
           player => !player.handmaidActive
         );
 
-        let potentialTargets = alivePlayersWithoutHandmaid;
+        potentialTargets = alivePlayersWithoutHandmaid;
 
         if (card.type !== Card.PRINCE) {
           // Remove self from potential targets
@@ -639,12 +692,12 @@ Game.prototype = {
           );
         }
 
-        if (potentialTargets.length === 0) {
-          console.log('all players have handmaids.');
-          return true;
+        if (potentialTargets.length > 0) {
+          return false;
         }
 
-        return false;
+        console.log('all players have handmaids.');
+        return true;
     }
   },
 

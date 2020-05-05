@@ -434,7 +434,7 @@ describe('performCardEffect', () => {
       game.sycophantTargetId = '2';
     });
 
-    it('forces the card effect to target the sycophant target', () => {
+    it('throws when not targeting the sycophant target', () => {
       game.activePlayerId = '1';
       const player1 = game.players['1'];
       const princeCard = new Card({ id: 100, type: Card.PRINCE });
@@ -445,8 +445,9 @@ describe('performCardEffect', () => {
       player2.hand = [
         new Card({ id: 102, type: Card.PRIEST }),
       ];
-      game.performCardEffect(princeCard);
-      expect(player2.getCard(102)).toBeFalsy();
+      expect(
+        () => game.performCardEffect(princeCard, { targetPlayerId: '3' })
+      ).toThrow();
     });
   });
 
